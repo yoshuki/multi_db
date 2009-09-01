@@ -36,18 +36,29 @@ module MultiDb
 
       # Replaces the connection of ActiveRecord::Base with a proxy and
       # establishes the connections to the slaves.
-      def setup!
+      def setup
         self.master_models ||= DEFAULT_MASTER_MODELS
         self.environment   ||= (defined?(RAILS_ENV) ? RAILS_ENV : 'development')
         self.sticky_slave  ||= false
         
         master = ActiveRecord::Base
         slaves = init_slaves
-        raise "No slaves databases defined for environment: #{self.environment}" if slaves.empty?
+
+        if slaves.empty?
+          master.logger.error("No slaves databases defined for environment: #{self.environment}")
+          return false
+        end
+
         master.send :include, MultiDb::ActiveRecordExtensions
         ActiveRecord::Observer.send :include, MultiDb::ObserverExtensions
         master.connection_proxy = new(master, slaves)
         master.logger.info("** multi_db with master and #{slaves.length} slave#{"s" if slaves.length > 1} loaded.")
+
+        return true
+      end
+
+      def setup!
+        raise "No slaves databases defined for environment: #{self.environment}" unless self.setup
       end
 
       protected
