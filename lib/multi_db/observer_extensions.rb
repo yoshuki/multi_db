@@ -6,8 +6,10 @@ module MultiDb
     
     # Send observed_method(object) if the method exists.
     def update_with_masterdb(observed_method, object) #:nodoc:
-      if object.class.connection.respond_to?(:with_master)
-        object.class.connection.with_master do
+      connection = object.class.connection if object.class.respond_to?(:connection)
+      connection ||= object.connection
+      if connection.respond_to?(:with_master)
+        connection.with_master do
           update_without_masterdb(observed_method, object)
         end
       else
