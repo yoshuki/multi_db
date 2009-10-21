@@ -12,6 +12,9 @@ module MultiDb
 
     DEFAULT_MASTER_MODELS = ['CGI::Session::ActiveRecordStore::Session']
 
+    # Safe methods will be redirected within standby time after sending to master.
+    STANDBY_TIME_FOR_SAFE_METHODS = 3.minutes
+
     attr_accessor :master
     tlattr_accessor :master_depth, :current, true
     
@@ -149,6 +152,8 @@ module MultiDb
     end
     
     def send_to_master(method, *args, &block)
+      @last_sending_to_master_at = Time.now
+
       reconnect_master! if @reconnect
       @master.retrieve_connection.send(method, *args, &block)
     rescue => e
@@ -156,6 +161,11 @@ module MultiDb
     end
     
     def send_to_current(method, *args, &block)
+      if @last_sending_to_master_at && @last_sending_to_master_at.since(STANDBY_TIME_FOR_SAFE_METHODS).future?
+        logger.info "[MULTIDB] Redirect to master database"
+        return send_to_master(method, *args, &block)
+      end
+
       reconnect_master! if @reconnect && master?
       current.retrieve_connection.send(method, *args, &block)
     rescue NotImplementedError, NoMethodError
