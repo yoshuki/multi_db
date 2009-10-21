@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description = "Connection proxy for ActiveRecord for single master / multiple slave database deployments"
   s.email = "yoshuki@saikyoline.jp"
   s.extra_rdoc_files = ["LICENSE", "README.rdoc"]
-  s.files = ["lib/multi_db.rb", "lib/multi_db/active_record_extensions.rb", "lib/multi_db/connection_proxy.rb", "lib/multi_db/observer_extensions.rb", "lib/multi_db/query_cache_compat.rb", "lib/multi_db/scheduler.rb", "LICENSE", "README.rdoc", "spec/config/database.yml", "spec/connection_proxy_spec.rb", "spec/scheduler_spec.rb", "spec/spec_helper.rb", "multi_db.gemspec"]
+  s.files = ["lib/multi_db.rb", "lib/multi_db/action_controller_extensions.rb", "lib/multi_db/active_record_extensions.rb", "lib/multi_db/connection_proxy.rb", "lib/multi_db/observer_extensions.rb", "lib/multi_db/query_cache_compat.rb", "lib/multi_db/scheduler.rb", "LICENSE", "README.rdoc", "spec/config/database.yml", "spec/connection_proxy_spec.rb", "spec/scheduler_spec.rb", "spec/spec_helper.rb", "multi_db.gemspec"]
   s.has_rdoc = true
   s.homepage = "http://github.com/yoshuki/multi_db"
   s.rdoc_options = ["--line-numbers", "--inline-source", "--title", "multi_db", "--main", "README.rdoc"]
