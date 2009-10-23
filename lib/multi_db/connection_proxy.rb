@@ -12,8 +12,10 @@ module MultiDb
 
     DEFAULT_MASTER_MODELS = ['CGI::Session::ActiveRecordStore::Session']
 
-    # Safe methods will be redirected within standby time after sending to master.
+    # Safe methods will be redirected within standby time after need standby methods.
+    # Standby time should be longer than database replication delay time.
     STANDBY_TIME_FOR_SAFE_METHODS = 3.minutes
+    NEED_STANDBY_METHODS = [ :insert, :update, :delete ]
 
     attr_accessor :master
     tlattr_accessor :master_depth, :current, true
@@ -152,7 +154,7 @@ module MultiDb
     end
     
     def send_to_master(method, *args, &block)
-      @last_sending_to_master_at = Time.now
+      @last_need_standby_method_called_at = Time.now if need_standby?(method)
 
       reconnect_master! if @reconnect
       @master.retrieve_connection.send(method, *args, &block)
@@ -161,8 +163,8 @@ module MultiDb
     end
     
     def send_to_current(method, *args, &block)
-      if @last_sending_to_master_at && @last_sending_to_master_at.since(STANDBY_TIME_FOR_SAFE_METHODS).future?
-        logger.info "[MULTIDB] Redirect to master database"
+      if @last_need_standby_method_called_at && @last_need_standby_method_called_at.since(STANDBY_TIME_FOR_SAFE_METHODS).future?
+        logger.info "[MULTIDB] Redirect to master database: #{method}"
         return send_to_master(method, *args, &block)
       end
 
@@ -202,5 +204,8 @@ module MultiDb
       ActiveRecord::Base.logger
     end
 
+    def need_standby?(method)
+      NEED_STANDBY_METHODS.include?(method)
+    end
   end
 end
